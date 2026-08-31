@@ -1,0 +1,197 @@
+{
+  "name": "Courier package tracking (demo tool)",
+  "flow": {
+    "start": "start-courier",
+    "flow": {
+      "start_node_id": "start-courier",
+      "start_speaker": "agent",
+      "tools": [
+        {
+          "name": "track_package",
+          "description": "Look up package delivery status, ETA, and details (demo: random realistic data).",
+          "executorKey": "courier_package_demo",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "tracking_number": {
+                "type": "string",
+                "description": "Customer tracking or reference number"
+              }
+            },
+            "required": ["tracking_number"]
+          },
+          "returns": {
+            "description": "Demo JSON: random carrier/ETA when ok is true. Slots merge dynamically (carrier, status → delivery_status, estimated_delivery, package_summary, …). When ok is false, missing_tracking asks for a reference.",
+            "type": "object",
+            "required": ["ok"],
+            "properties": {
+              "ok": { "type": "boolean" },
+              "demo": { "type": "boolean", "description": "Always true for this demo handler" },
+              "tracking_number": { "type": "string" },
+              "carrier": { "type": "string" },
+              "status": {
+                "type": "string",
+                "description": "Mapped into slot delivery_status by runtime"
+              },
+              "estimated_delivery": { "type": "string" },
+              "origin_hub": { "type": "string" },
+              "destination_city": { "type": "string" },
+              "service_level": { "type": "string" },
+              "last_scan": { "type": "string" },
+              "weight_kg": { "type": "number" },
+              "package_summary": {
+                "type": "string",
+                "description": "One-line summary for voice"
+              },
+              "error": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "start-courier",
+          "name": "welcome_courier",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "e-start-1",
+              "condition": "User wants to track a package or shipment",
+              "destination_node_id": "ask-tracking",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants to track a package or shipment"
+              }
+            },
+            {
+              "id": "e-start-2",
+              "condition": "Other",
+              "destination_node_id": "end-courier",
+              "transition_condition": { "type": "prompt", "prompt": "Other" }
+            }
+          ],
+          "instruction": {
+            "text": "Hi, I can help you track a shipment. Do you have a tracking number ready?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 100, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "ask-tracking",
+          "name": "ask_tracking",
+          "type": "conversation",
+          "capture_slot": "tracking_number",
+          "edges": [
+            {
+              "id": "e-ask-1",
+              "condition": "User provided tracking or reference",
+              "destination_node_id": "courier-tool",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User provided tracking or reference"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Please say or enter your tracking number.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 400, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "courier-tool",
+          "name": "lookup_package",
+          "type": "tool",
+          "instruction": {
+            "text": "One moment while I pull up your package details.",
+            "type": "prompt"
+          },
+          "tool": {
+            "name": "track_package",
+            "description": "Fetch demo package status for tracking number",
+            "parameters": {
+              "tracking_number": "{{tracking_number}}"
+            }
+          },
+          "edges": [
+            {
+              "id": "e-tool-ok",
+              "condition": "On successful response",
+              "destination_node_id": "package-details",
+              "transition_condition": { "type": "prompt", "prompt": "On successful response" }
+            },
+            {
+              "id": "e-tool-fail",
+              "condition": "On failure",
+              "destination_node_id": "package-error",
+              "transition_condition": { "type": "prompt", "prompt": "On failure" }
+            }
+          ],
+          "display_position": { "x": 700, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "package-details",
+          "name": "package_details",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "e-details-1",
+              "condition": "User is done or is satisfied from response or does not need anything else",
+              "destination_node_id": "end-courier",
+              "transition_condition": { "type": "prompt", "prompt": "User is done" }
+            }
+          ],
+          "instruction": {
+            "text": "Your package with {{carrier}} is {{delivery_status}}. Estimated delivery: {{estimated_delivery}}. It is heading to {{destination_city}}. Service: {{service_level}}. Last scan: {{last_scan}}. Weight about {{weight_kg}} kilograms. {{package_summary}}",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "package-error",
+          "name": "package_error",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "e-err-1",
+              "condition": "Try again with another number",
+              "destination_node_id": "ask-tracking",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Try again with another number"
+              }
+            },
+            {
+              "id": "e-err-2",
+              "condition": "End call",
+              "destination_node_id": "end-courier",
+              "transition_condition": { "type": "prompt", "prompt": "End call" }
+            }
+          ],
+          "instruction": {
+            "text": "I could not look that up. Would you like to try another tracking number?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 300 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "end-courier",
+          "name": "end_courier",
+          "type": "end",
+          "instruction": {
+            "text": "Thanks for using our courier line. Goodbye.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1300, "y": 100 }
+        }
+      ]
+    },
+    "intents": {}
+  }
+}

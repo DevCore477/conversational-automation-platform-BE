@@ -1,0 +1,588 @@
+{
+  "name": "Food order (voice)",
+  "flow": {
+    "start": "start-order",
+    "flow": {
+      "start_node_id": "start-order",
+      "start_speaker": "agent",
+      "global_prompt": "You are a friendly fast-food phone order assistant. Keep every reply to one short sentence. Do not repeat the full menu unless asked.\n\nPer item: pick one burger or wrap, then exactly two sauces (duplicates OK), then optional add-ons.\nAfter each item you will ask if they want another.\nDrink and fries are optional — accept \"no\" or \"none\" immediately.\nAsk delivery or pickup; if delivery, collect the full delivery address before confirming.\n\nMENU — Burgers: Wehshi, Fillet. Wraps: Smol Wrap, Tortilla Wrap, Smol Nugg Wrap, Tortilla Nugg Wrap. Sauces: Atomic, Chipotle, Greek, Garlic, Mushroom. Add-ons: Cheese, Mushroom, Pickles, Sweetcorns, Jalapenos. Drinks: Coke, Sprite. Fries: Smol fries, Upsize fries.",
+      "tools": [
+        {
+          "name": "append_order_item",
+          "description": "Save the current line item (product, sauces, add-ons) to the order basket.",
+          "executorKey": "append_order_item",
+          "parameters": { "type": "object", "properties": {}, "required": [] },
+          "returns": {
+            "type": "object",
+            "required": ["ok"],
+            "properties": {
+              "ok": { "type": "boolean" },
+              "order_items": { "type": "array" },
+              "items_count": { "type": "integer" }
+            }
+          }
+        },
+        {
+          "name": "submit_food_order",
+          "description": "Validate and submit the full order; returns order_summary for voice read-back.",
+          "executorKey": "submit_food_order",
+          "parameters": { "type": "object", "properties": {}, "required": [] },
+          "returns": {
+            "type": "object",
+            "required": ["ok", "order_summary"],
+            "properties": {
+              "ok": { "type": "boolean" },
+              "order_id": { "type": "string" },
+              "order_summary": { "type": "string" },
+              "items_count": { "type": "integer" },
+              "delivery_type": { "type": "string" },
+              "delivery_address": { "type": "string" }
+            }
+          }
+        }
+      ],
+      "slot_definitions": {
+        "product": {
+          "aliases": {
+            "wehshi": "Wehshi",
+            "wehshi burger": "Wehshi",
+            "fillet": "Fillet",
+            "fillet burger": "Fillet",
+            "philly": "Fillet",
+            "philly burger": "Fillet",
+            "basic": "Fillet",
+            "totilla": "Tortilla Wrap",
+            "tortilla": "Tortilla Wrap",
+            "smol": "Smol Wrap",
+            "smol wrap": "Smol Wrap",
+            "small wrap": "Smol Wrap",
+            "small bird": "Smol Wrap",
+            "small bag": "Smol Wrap",
+            "tortilla wrap": "Tortilla Wrap",
+            "smol nugg wrap": "Smol Nugg Wrap",
+            "tortilla nugg wrap": "Tortilla Nugg Wrap",
+            "smol nugget wrap": "Smol Nugg Wrap",
+            "tortilla nugget wrap": "Tortilla Nugg Wrap",
+            "smol nugg": "Smol Nugg Wrap",
+            "tortilla nugg": "Tortilla Nugg Wrap"
+          }
+        },
+        "sauce_1": {
+          "aliases": {
+            "atomic": "Atomic",
+            "chipotle": "Chipotle",
+            "chiptle": "Chipotle",
+            "chiptole": "Chipotle",
+            "greek": "Greek",
+            "garlic": "Garlic",
+            "mushroom": "Mushroom",
+            "mashroom": "Mushroom"
+          }
+        },
+        "sauce_2": {
+          "aliases": {
+            "atomic": "Atomic",
+            "chipotle": "Chipotle",
+            "chiptle": "Chipotle",
+            "chiptole": "Chipotle",
+            "greek": "Greek",
+            "garlic": "Garlic",
+            "mushroom": "Mushroom",
+            "mashroom": "Mushroom"
+          }
+        },
+        "addons": {
+          "optional": true,
+          "decline_value": "none",
+          "decline_exclude_if_contains": ["cheese", "pickle", "jalapeno", "sweetcorn", "mushroom"],
+          "multi": true,
+          "aliases": {
+            "cheese": "Cheese",
+            "mushroom": "Mushroom",
+            "pickles": "Pickles",
+            "sweetcorns": "Sweetcorns",
+            "sweetcorn": "Sweetcorns",
+            "jalapenos": "Jalapenos",
+            "jalapeno": "Jalapenos"
+          }
+        },
+        "wants_another": {
+          "aliases": {
+            "yes": "yes",
+            "yeah": "yes",
+            "yep": "yes",
+            "sure": "yes",
+            "another": "yes",
+            "one more": "yes",
+            "more": "yes",
+            "that's all": "no",
+            "thats all": "no",
+            "nothing else": "no",
+            "no more": "no",
+            "i'm done": "no",
+            "all set": "no",
+            "no": "no"
+          },
+          "choices": ["yes", "no"]
+        },
+        "drink": {
+          "optional": true,
+          "decline_value": "none",
+          "decline_exclude_if_contains": ["coke", "sprite", "coca"],
+          "aliases": {
+            "coke": "Coke",
+            "coca": "Coke",
+            "sprite": "Sprite"
+          },
+          "choices": ["Coke", "Sprite"]
+        },
+        "fries": {
+          "optional": true,
+          "decline_value": "none",
+          "decline_exclude_if_contains": ["smol", "upsize", "large", "small", "regular"],
+          "aliases": {
+            "upsize": "Upsize fries",
+            "large": "Upsize fries",
+            "big": "Upsize fries",
+            "smol": "Smol fries",
+            "small": "Smol fries",
+            "regular": "Smol fries"
+          },
+          "choices": ["Smol fries", "Upsize fries"]
+        },
+        "delivery_type": {
+          "aliases": {
+            "delivery": "delivery",
+            "deliver": "delivery",
+            "home delivery": "delivery",
+            "send it": "delivery",
+            "pickup": "pickup",
+            "pick up": "pickup",
+            "pick-up": "pickup",
+            "collection": "pickup",
+            "takeaway": "pickup",
+            "take away": "pickup",
+            "collect": "pickup"
+          },
+          "choices": ["delivery", "pickup"]
+        },
+        "delivery_address": {
+          "aliases": {}
+        }
+      },
+      "nodes": [
+        {
+          "id": "start-order",
+          "name": "welcome_order",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "e-start-1",
+              "condition": "User wants to place an order",
+              "destination_node_id": "ask-product",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants to place an order or is ready to order"
+              }
+            },
+            {
+              "id": "e-start-2",
+              "condition": "User does not want to order",
+              "destination_node_id": "end-order",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User does not want to order or wants to end the call"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Hi! I can take your order for burgers and wraps. Ready to order?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 100, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-product",
+          "name": "ask_product",
+          "type": "conversation",
+          "capture_slot": "product",
+          "basket_done_destination": "ask-drink",
+          "edges": [
+            {
+              "id": "e-product-1",
+              "condition": "User chose a menu item",
+              "destination_node_id": "ask-sauce-1",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User chose a burger or wrap from the menu"
+              }
+            },
+            {
+              "id": "e-product-done",
+              "condition": "User is done adding food items",
+              "destination_node_id": "ask-drink",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User does not want another burger or wrap and is done ordering food items"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "What would you like? Wehshi or Fillet burgers, or a Smol Wrap, Tortilla Wrap, Smol Nugg Wrap, or Tortilla Nugg Wrap.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 400, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-sauce-1",
+          "name": "ask_sauce_1",
+          "type": "conversation",
+          "capture_slot": "sauce_1",
+          "edges": [
+            {
+              "id": "e-sauce1-1",
+              "condition": "User picked first sauce",
+              "destination_node_id": "ask-sauce-2",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User picked one sauce from Atomic, Chipotle, Greek, Garlic, or Mushroom"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "First sauce — Atomic, Chipotle, Greek, Garlic, or Mushroom?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 700, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-sauce-2",
+          "name": "ask_sauce_2",
+          "type": "conversation",
+          "capture_slot": "sauce_2",
+          "edges": [
+            {
+              "id": "e-sauce2-1",
+              "condition": "User picked second sauce",
+              "destination_node_id": "ask-addons",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User picked a second sauce (same sauce twice is allowed)"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Second sauce? Same choices, and you can repeat one.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-addons",
+          "name": "ask_addons",
+          "type": "conversation",
+          "capture_slot": "addons",
+          "edges": [
+            {
+              "id": "e-addons-1",
+              "condition": "User chose add-ons or none",
+              "destination_node_id": "append-item-tool",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User listed add-ons or said none / no add-ons"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Any add-ons — Cheese, Mushroom, Pickles, Sweetcorns, Jalapenos? Or say none.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1300, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "append-item-tool",
+          "name": "append_item",
+          "type": "tool",
+          "instruction": {
+            "text": "Got it.",
+            "type": "prompt"
+          },
+          "tool": {
+            "name": "append_order_item",
+            "description": "Save line item to basket",
+            "parameters": {}
+          },
+          "edges": [
+            {
+              "id": "e-append-ok",
+              "condition": "On successful response",
+              "destination_node_id": "ask-another",
+              "transition_condition": { "type": "prompt", "prompt": "On successful response" }
+            },
+            {
+              "id": "e-append-fail",
+              "condition": "On failure",
+              "destination_node_id": "ask-product",
+              "transition_condition": { "type": "prompt", "prompt": "On failure" }
+            }
+          ],
+          "display_position": { "x": 1600, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "ask-another",
+          "name": "ask_another_item",
+          "type": "conversation",
+          "capture_slot": "wants_another",
+          "edges": [
+            {
+              "id": "e-another-yes",
+              "condition": "User wants another item",
+              "when_slot_value": ["yes", "yeah", "yep", "sure", "another", "more", "one more"],
+              "destination_node_id": "ask-product",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants to add another burger or wrap"
+              }
+            },
+            {
+              "id": "e-another-no",
+              "condition": "User is done adding items",
+              "when_slot_value": ["no", "that's all", "thats all", "nothing else", "done", "all set"],
+              "destination_node_id": "ask-drink",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User is done ordering items / that's all / no more"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Anything else — another burger or wrap? Or say that's all.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1900, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-drink",
+          "name": "ask_drink",
+          "type": "conversation",
+          "capture_slot": "drink",
+          "edges": [
+            {
+              "id": "e-drink-1",
+              "condition": "User chose drink or declined",
+              "destination_node_id": "ask-fries",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User chose Coke or Sprite, or declined / said no drink / none"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Coke or Sprite? Or say no thanks.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 2200, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-fries",
+          "name": "ask_fries",
+          "type": "conversation",
+          "capture_slot": "fries",
+          "edges": [
+            {
+              "id": "e-fries-1",
+              "condition": "User chose fries or declined",
+              "destination_node_id": "ask-delivery-type",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User chose Smol or Upsize fries, or declined / said no fries / none"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Smol fries or Upsize fries? Or say no thanks.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 2500, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-delivery-type",
+          "name": "ask_delivery_type",
+          "type": "conversation",
+          "capture_slot": "delivery_type",
+          "edges": [
+            {
+              "id": "e-delivery-type-delivery",
+              "condition": "User chose delivery",
+              "when_slot_value": ["delivery", "deliver", "home"],
+              "destination_node_id": "ask-address",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants home delivery"
+              }
+            },
+            {
+              "id": "e-delivery-type-pickup",
+              "condition": "User chose pickup",
+              "when_slot_value": ["pickup", "pick up", "collection", "takeaway", "collect"],
+              "destination_node_id": "submit-order-tool",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants pickup / collection / takeaway"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Is this for delivery or pickup?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 2650, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "ask-address",
+          "name": "ask_delivery_address",
+          "type": "conversation",
+          "capture_slot": "delivery_address",
+          "edges": [
+            {
+              "id": "e-address-1",
+              "condition": "User provided delivery address",
+              "destination_node_id": "submit-order-tool",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User gave a street address, building, area, or full delivery location"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "What's the full delivery address — building, street, and area?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 2800, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "submit-order-tool",
+          "name": "submit_order",
+          "type": "tool",
+          "instruction": {
+            "text": "One moment.",
+            "type": "prompt"
+          },
+          "tool": {
+            "name": "submit_food_order",
+            "description": "Submit full order",
+            "parameters": {}
+          },
+          "edges": [
+            {
+              "id": "e-submit-ok",
+              "condition": "On successful response",
+              "destination_node_id": "confirm-order",
+              "transition_condition": { "type": "prompt", "prompt": "On successful response" }
+            },
+            {
+              "id": "e-submit-fail",
+              "condition": "On failure",
+              "destination_node_id": "ask-product",
+              "transition_condition": { "type": "prompt", "prompt": "On failure" }
+            }
+          ],
+          "display_position": { "x": 2800, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "confirm-order",
+          "name": "confirm_order",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "e-confirm-1",
+              "condition": "User confirms",
+              "destination_node_id": "end-order",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User confirms order or is satisfied"
+              }
+            },
+            {
+              "id": "e-confirm-2",
+              "condition": "User wants changes",
+              "destination_node_id": "ask-product",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User wants to change or restart the order"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "You're all set — reference {{order_id}}. {{order_summary}}. Shall I confirm that?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 3100, "y": 100 },
+          "interruption_sensitivity": 1
+        },
+        {
+          "id": "end-order",
+          "name": "end_order",
+          "type": "end",
+          "instruction": {
+            "text": "Thanks — your order is placed. Goodbye!",
+            "type": "prompt"
+          },
+          "display_position": { "x": 3400, "y": 100 }
+        }
+      ]
+    },
+    "intents": {
+      "place_order": {
+        "rules": [
+          "i want to order",
+          "place an order",
+          "yes please",
+          "yeah order",
+          "ready to order"
+        ]
+      },
+      "order_more": {
+        "rules": ["yes another", "add one more", "one more please", "more please"]
+      },
+      "order_done": {
+        "rules": [
+          "that's all",
+          "thats all",
+          "that's it",
+          "thats it",
+          "nothing else",
+          "no more items",
+          "no more products",
+          "no more order",
+          "i'm done",
+          "all set",
+          "no more items please",
+          "don't want more",
+          "dont want more"
+        ]
+      },
+      "delivery": {
+        "rules": ["delivery", "deliver", "home delivery", "send to my address"]
+      },
+      "pickup": {
+        "rules": ["pickup", "pick up", "collection", "takeaway", "i'll collect"]
+      },
+      "no_order": {
+        "rules": ["no thanks", "goodbye", "bye", "cancel"]
+      }
+    }
+  }
+}

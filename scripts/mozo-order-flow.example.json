@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "global_prompt": "You are a friendly guest-facing ordering assistant for this venue. Help the guest pick items and quantities, one at a time, then confirm and submit the order. Keep turns short and natural.",
+  "start_node_id": "ask-item",
+  "start_speaker": "agent",
+  "tools": [
+    {
+      "name": "mozo_get_menu",
+      "executorKey": "mozo_get_menu",
+      "description": "Fetch this venue's live menu from Mozo. Call this whenever the guest asks what's available, asks about a specific dish, or asks a price — never invent menu items or prices.",
+      "parameters": { "type": "object", "properties": {} },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "items": { "type": "array" },
+          "items_count": { "type": "integer" },
+          "menu_configured": { "type": "boolean" }
+        },
+        "description": "ok:true with the item list (id, name, price, description) — empty when Mozo has no menu configured for this venue yet."
+      }
+    },
+    {
+      "name": "mozo_append_order_item",
+      "executorKey": "mozo_append_order_item",
+      "description": "Add the item and quantity just captured to the running order. Validates the item against the live Mozo menu when one is configured.",
+      "parameters": { "type": "object", "properties": {} },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "mozo_order_items": { "type": "array" },
+          "order_summary_so_far": { "type": "string" },
+          "order_total_suffix": { "type": "string" }
+        },
+        "description": "ok:true with the running item list and a ready-to-read summary/total, or ok:false + suggested_node_id (e.g. item wasn't found on the menu) to retry."
+      }
+    },
+    {
+      "name": "mozo_create_order",
+      "executorKey": "mozo_create_order",
+      "description": "Submit the accumulated order to Mozo for this venue. Only call this after the guest has explicitly confirmed the order.",
+      "parameters": { "type": "object", "properties": {} },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "order_summary": { "type": "string" },
+          "mozo_order_session_id": { "type": ["string", "null"] }
+        },
+        "description": "ok:true with the real Mozo order_session_id, or ok:false + an error message if Mozo rejected it."
+      }
+    }
+  ],
+  "slot_definitions": {
+    "item_name": {},
+    "quantity": { "optional": true, "decline_value": "1" }
+  },
+  "nodes": [
+    {
+      "id": "ask-item",
+      "name": "Ask for item",
+      "type": "conversation",
+      "instruction": {
+        "type": "prompt",
+        "text": "Greet the guest. If you haven't already, call mozo_get_menu and mention two or three items to help them decide (only if the menu actually has items — never invent any). Then ask what they'd like to order. If the guest asks about a dish or price at any point, call mozo_get_menu to answer accurately instead of guessing."
+      },
+      "capture_slot": "item_name",
+      "edges": [
+        {
+          "id": "ask-item-to-ask-quantity",
+          "condition": "guest named an item",
+          "transition_condition": { "type": "prompt", "prompt": "The guest named a menu item they want." },
+          "destination_node_id": "ask-quantity"
+        }
+      ]
+    },
+    {
+      "id": "ask-quantity",
+      "name": "Ask quantity",
+      "type": "conversation",
+      "instruction": { "type": "prompt", "text": "Ask how many of that item they'd like." },
+      "capture_slot": "quantity",
+      "edges": [
+        {
+          "id": "ask-quantity-to-append-item",
+          "condition": "guest gave a quantity",
+          "transition_condition": { "type": "prompt", "prompt": "The guest specified how many they want." },
+          "destination_node_id": "append-item"
+        }
+      ]
+    },
+    {
+      "id": "append-item",
+      "name": "Add item to order",
+      "type": "tool",
+      "tool": {
+        "name": "mozo_append_order_item",
+        "description": "Add the captured item + quantity to the running order."
+      },
+      "edges": [
+        {
+          "id": "append-item-success",
+          "condition": "item added successfully",
+          "transition_condition": { "type": "prompt", "prompt": "The item was added to the order." },
+          "destination_node_id": "ask-more"
+        }
+      ]
+    },
+    {
+      "id": "ask-more",
+      "name": "Ask if anything else",
+      "type": "conversation",
+      "instruction": { "type": "prompt", "text": "Ask if they'd like to add anything else to the order. If they ask about a menu item or price, call mozo_get_menu to answer accurately." },
+      "edges": [
+        {
+          "id": "ask-more-to-ask-item",
+          "condition": "wants to add another item",
+          "transition_condition": { "type": "prompt", "prompt": "The guest wants to order something else." },
+          "destination_node_id": "ask-item"
+        },
+        {
+          "id": "ask-more-to-confirm",
+          "condition": "done ordering, ready to submit",
+          "transition_condition": { "type": "prompt", "prompt": "The guest is done adding items and wants to place the order." },
+          "destination_node_id": "confirm-order"
+        }
+      ]
+    },
+    {
+      "id": "confirm-order",
+      "name": "Confirm order before submitting",
+      "type": "conversation",
+      "instruction": {
+        "type": "prompt",
+        "text": "Read back the guest's full order: {{order_summary_so_far}}{{order_total_suffix}}. Ask them to confirm you should place it now. If they ask about a menu item or price here, call mozo_get_menu to answer accurately."
+      },
+      "edges": [
+        {
+          "id": "confirm-order-to-submit",
+          "condition": "guest confirms the order",
+          "transition_condition": { "type": "prompt", "prompt": "The guest confirmed they want the order placed." },
+          "destination_node_id": "submit-order"
+        },
+        {
+          "id": "confirm-order-to-ask-more",
+          "condition": "guest wants to add or change something before placing the order",
+          "transition_condition": { "type": "prompt", "prompt": "The guest wants to modify the order before it's placed." },
+          "destination_node_id": "ask-more"
+        },
+        {
+          "id": "confirm-order-to-cancelled",
+          "condition": "guest wants to cancel the order entirely",
+          "transition_condition": { "type": "prompt", "prompt": "The guest decided not to place the order after all." },
+          "destination_node_id": "order-cancelled"
+        }
+      ]
+    },
+    {
+      "id": "submit-order",
+      "name": "Submit order to Mozo",
+      "type": "tool",
+      "instruction": { "type": "prompt", "text": "Let the guest know you're placing the order now." },
+      "tool": {
+        "name": "mozo_create_order",
+        "description": "Submit the full accumulated order to Mozo."
+      },
+      "edges": [
+        {
+          "id": "submit-order-success",
+          "condition": "order submitted successfully",
+          "transition_condition": { "type": "prompt", "prompt": "Mozo accepted the order." },
+          "destination_node_id": "order-confirmed"
+        },
+        {
+          "id": "submit-order-failure",
+          "condition": "order submission failed",
+          "transition_condition": { "type": "prompt", "prompt": "Mozo rejected the order or the request errored." },
+          "destination_node_id": "order-failed"
+        }
+      ]
+    },
+    {
+      "id": "order-confirmed",
+      "name": "Order confirmed",
+      "type": "end",
+      "instruction": {
+        "type": "prompt",
+        "text": "Read back the order_summary slot, thank the guest, and let them know it's been sent to the kitchen."
+      }
+    },
+    {
+      "id": "order-failed",
+      "name": "Order failed",
+      "type": "end",
+      "instruction": {
+        "type": "prompt",
+        "text": "Apologize that the order couldn't be placed automatically and suggest they flag a staff member."
+      }
+    },
+    {
+      "id": "order-cancelled",
+      "name": "Order cancelled",
+      "type": "end",
+      "instruction": {
+        "type": "prompt",
+        "text": "Acknowledge that you won't place the order, and let them know a staff member can help if they'd like to order later."
+      }
+    }
+  ]
+}

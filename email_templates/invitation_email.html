@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation to Join {{company_name}}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #F9F9F9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .outer-container {
+            background-color: #F9F9F9;
+            position: relative;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #F9F9F9;
+            position: relative;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #FFFFFF;
+            padding: 24px 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-gradient {
+            width: 53px;
+            height: 36px;
+            background: linear-gradient(180deg, rgba(106, 50, 225, 0.8) 0%, rgba(197, 165, 248, 0.8) 100%);
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .brand-name {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: #333333;
+            vertical-align: middle;
+            line-height: 36px;
+        }
+        .content {
+            padding: 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .greeting {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            line-height: 22px;
+            color: #000000;
+            margin: 0 0 20px 0;
+        }
+        .message {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 17px;
+            color: #000000;
+            margin: 0 0 32px 0;
+        }
+        .button-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 11px 24px;
+            background: {{company_primary_color}};
+            background-color: {{company_primary_color}};
+            color: #FFFFFF !important;
+            text-decoration: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 18px;
+            text-align: center;
+        }
+        .questions {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 17px;
+            color: #000000;
+            margin: 0 0 32px 0;
+        }
+        .questions a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        .closing {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 17px;
+            color: #000000;
+            margin: 0 0 11px 0;
+        }
+        .closing-bold {
+            font-weight: 700;
+            margin: 0 0 4px 0;
+        }
+        .team-name {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 19px;
+            color: #000000;
+            margin: 0 0 32px 0;
+        }
+        .fallback-section {
+            margin: 32px 0 0 0;
+        }
+        .fallback-label {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 400;
+            font-size: 12px;
+            line-height: 15px;
+            color: #000000;
+            margin: 0 0 16px 0;
+        }
+        .fallback-url {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            line-height: 15px;
+            text-decoration: underline;
+            color: #215BE5;
+            word-break: break-all;
+        }
+        .spacer-32 {
+            height: 32px;
+        }
+        @media only screen and (max-width: 600px) {
+            .content {
+                padding: 0 24px;
+            }
+            .header {
+                padding: 20px 24px;
+            }
+            .brand-name {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="outer-container" style="background-color: #F9F9F9;">
+        <tr>
+            <td align="center" style="padding: 20px 10px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; width: 100%; background-color: #F9F9F9; position: relative;">
+                    <tr>
+                        <td style="position: relative; overflow: hidden;">
+                            <!-- Header -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="header" style="background-color: #FFFFFF; padding: 24px 40px; position: relative; z-index: 1;">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                <td style="padding-right: 12px; vertical-align: middle;">
+                                                    <img src="{{company_logo}}" alt="{{company_name}}" width="53" height="36" style="width: 53px; height: 36px; display: block; border: 0; object-fit: contain;" onerror="this.style.display='none'">
+                                                </td>
+                                                <td style="vertical-align: middle;">
+                                                    <span class="brand-name" style="font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 500; letter-spacing: -0.02em; color: #333333; line-height: 36px;">{{company_name}}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Spacer -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr><td style="height: 40px;"></td></tr>
+                            </table>
+
+                            <!-- Content -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="content" style="padding: 0 40px; position: relative; z-index: 1; max-width: 520px; margin: 0 auto;">
+                                <tr>
+                                    <td>
+                                        <!-- Greeting -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="greeting" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 700; font-size: 18px; line-height: 22px; color: #000000; padding-bottom: 20px;">
+                                                    Hi, {{user_name}}!
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Message -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="message" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 400; font-size: 14px; line-height: 17px; color: #000000; padding-bottom: 32px;">
+                                                    We are excited to invite you to join {{company_name}}! You have been added as a <strong>{{role}}</strong> to our platform.
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- CTA Text -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="message" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 400; font-size: 14px; line-height: 17px; color: #000000; padding-bottom: 40px;">
+                                                    To get started, please click on the button below to complete your registration:
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Button -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td align="center" class="button-container" style="padding-bottom: 40px;">
+                                                    <a href="{{registration_url}}" class="button" style="display: inline-block; padding: 11px 24px; background: {{company_primary_color}}; background-color: {{company_primary_color}}; color: #FFFFFF !important; text-decoration: none; border-radius: 12px; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 600; font-size: 14px; line-height: 18px; text-align: center;">Complete Registration</a>
+                                                    <!--[if mso]>
+                                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{registration_url}}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="30%" strokecolor="{{company_primary_color}}" fillcolor="{{company_primary_color}}">
+                                                        <w:anchorlock/>
+                                                        <center style="color:#FFFFFF;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;">Complete Registration</center>
+                                                    </v:roundrect>
+                                                    <![endif]-->
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Questions -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="questions" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 400; font-size: 14px; line-height: 17px; color: #000000; padding-bottom: 32px;">
+                                                    If you have any questions or need further assistance, feel free to <a href="{{support_url}}" style="color: #2563eb; text-decoration: underline;">contact our support team</a> anytime.
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Closing -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="closing" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 400; font-size: 14px; line-height: 17px; color: #000000; padding-bottom: 11px;">
+                                                    Welcome to the {{company_name}} family!
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="closing-bold" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 700; font-size: 14px; line-height: 17px; color: #000000; padding-bottom: 4px;">
+                                                    Best regards,
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="team-name" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 700; font-size: 16px; line-height: 19px; color: #000000; padding-bottom: 32px;">
+                                                    The {{company_name}} Team
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Fallback URL -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="fallback-label" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 400; font-size: 12px; line-height: 15px; color: #000000; padding-bottom: 16px;">
+                                                    If you're having trouble with the button above, copy and paste the URL below into your web browser:
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td class="fallback-url" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 600; font-size: 12px; line-height: 15px; text-decoration: underline; color: #215BE5; word-break: break-all; padding-bottom: 40px;">
+                                                    {{registration_url}}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

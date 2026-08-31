@@ -1,0 +1,135 @@
+{
+  "name": "Support handoff (call transfer)",
+  "flow": {
+    "start": "start-node-support",
+    "flow": {
+      "start_node_id": "start-node-support",
+      "start_speaker": "agent",
+      "nodes": [
+        {
+          "id": "start-node-support",
+          "name": "welcome_support",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-start-support-1",
+              "condition": "If user asks to speak with a human, agent, or representative",
+              "destination_node_id": "transfer-to-support",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user asks to speak with a human, agent, or representative"
+              }
+            },
+            {
+              "id": "edge-start-support-2",
+              "condition": "If user has a general question",
+              "destination_node_id": "help-node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user has a general question"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Hi! Thanks for calling. How can I help you today?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 100, "y": 100 },
+          "interruption_sensitivity": 0,
+          "start_speaker": "agent"
+        },
+        {
+          "id": "help-node",
+          "name": "answer_question",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-help-1",
+              "condition": "If user is satisfied and has nothing else to ask",
+              "destination_node_id": "end-node-support",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user is satisfied and has nothing else to ask"
+              }
+            },
+            {
+              "id": "edge-help-2",
+              "condition": "If user still wants to speak with a human instead",
+              "destination_node_id": "transfer-to-support",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user still wants to speak with a human instead"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Answer the user's question as best you can with the information available. If you can't fully resolve it, offer to connect them with a team member.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 400, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "transfer-to-support",
+          "name": "transfer_to_support",
+          "type": "transfer_call",
+          "instruction": {
+            "text": "Sure, let me connect you with a member of our support team now. Please hold for just a moment.",
+            "type": "prompt"
+          },
+          "transfer_destination": {
+            "type": "phone_number",
+            "number": "+15551234567"
+          },
+          "transfer_option": {
+            "type": "cold_transfer"
+          },
+          "edge": {
+            "id": "edge-transfer-1",
+            "condition": "If the transfer could not be completed",
+            "destination_node_id": "transfer-fallback-node",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "If the transfer could not be completed"
+            }
+          },
+          "display_position": { "x": 700, "y": 100 }
+        },
+        {
+          "id": "transfer-fallback-node",
+          "name": "transfer_fallback",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-transfer-fallback-1",
+              "condition": "Next",
+              "destination_node_id": "end-node-support",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Next"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "I'm sorry, I wasn't able to connect you to a live agent right now. Is there anything else I can help with in the meantime?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 700, "y": 300 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "end-node-support",
+          "name": "end_support",
+          "type": "end",
+          "instruction": {
+            "text": "Thanks for calling! Have a great day.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 100 },
+          "interruption_sensitivity": 0
+        }
+      ]
+    },
+    "intents": {}
+  }
+}

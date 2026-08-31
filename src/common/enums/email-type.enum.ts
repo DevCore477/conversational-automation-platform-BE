@@ -1,0 +1,4 @@
+export enum EmailTypeEnum {
+  INVITATION_EMAIL = 'INVITATION_EMAIL',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+}

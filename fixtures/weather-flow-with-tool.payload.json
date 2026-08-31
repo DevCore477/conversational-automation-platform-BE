@@ -1,0 +1,219 @@
+{
+  "name": "Weather check (tool)",
+  "flow": {
+    "start": "start-node-weather",
+    "flow": {
+      "start_node_id": "start-node-weather",
+      "start_speaker": "agent",
+      "tools": [
+        {
+          "name": "get_weather",
+          "description": "Fetch current weather information for a given location.",
+          "executorKey": "get_weather",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City or place name"
+              }
+            },
+            "required": ["location"]
+          },
+          "returns": {
+            "description": "Handler JSON. When ok is true, slots map for templates include resolved_location, temperature_c, weather_summary, etc. When ok is false, expect error and optional message.",
+            "type": "object",
+            "required": ["ok"],
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "True when geocode and forecast succeeded"
+              },
+              "resolved_location": {
+                "type": "string",
+                "description": "Resolved place name for display"
+              },
+              "location_query": { "type": "string" },
+              "latitude": { "type": "number" },
+              "longitude": { "type": "number" },
+              "temperature_c": { "type": "number", "description": "Air temperature °C" },
+              "weather_description": { "type": "string" },
+              "weather_summary": {
+                "type": "string",
+                "description": "Short line suitable for voice"
+              },
+              "humidity_percent": { "type": ["number", "null"] },
+              "wind_speed_kmh": { "type": ["number", "null"] },
+              "weather_code": { "type": "integer" },
+              "error": {
+                "type": "string",
+                "description": "Present when ok is false"
+              },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "start-node-weather",
+          "name": "welcome_weather",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-start-weather-1",
+              "condition": "If user wants to check weather",
+              "destination_node_id": "ask_location_node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user wants to check weather"
+              }
+            },
+            {
+              "id": "edge-start-weather-2",
+              "condition": "Other queries",
+              "destination_node_id": "end-node-weather",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Other queries"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Hello! I can help you check the weather. What would you like to know?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 100, "y": 100 },
+          "interruption_sensitivity": 0,
+          "start_speaker": "agent"
+        },
+        {
+          "id": "ask_location_node",
+          "name": "ask_location",
+          "type": "conversation",
+          "capture_slot": "location",
+          "edges": [
+            {
+              "id": "edge-ask-location-1",
+              "condition": "If user provides location",
+              "destination_node_id": "weather_tool_node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If user provides location"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Please tell me the city or location you want the weather for.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 400, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "weather_tool_node",
+          "name": "get_weather_data",
+          "type": "tool",
+          "instruction": {
+            "text": "One moment while I look up the weather.",
+            "type": "prompt"
+          },
+          "tool": {
+            "name": "get_weather",
+            "description": "Fetch current weather for the user's location (filled from slot location).",
+            "parameters": {
+              "location": "{{location}}"
+            }
+          },
+          "edges": [
+            {
+              "id": "edge-weather-tool-1",
+              "condition": "On successful response",
+              "destination_node_id": "weather_response_node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "On successful response"
+              }
+            },
+            {
+              "id": "edge-weather-tool-2",
+              "condition": "On failure",
+              "destination_node_id": "error_node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "On failure"
+              }
+            }
+          ],
+          "display_position": { "x": 700, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "weather_response_node",
+          "name": "weather_response",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-weather-response-1",
+              "condition": "Next",
+              "destination_node_id": "end-node-weather",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Next"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "In {{resolved_location}} right now: {{weather_summary}}. The temperature is {{temperature_c}}°C. Is there anything else I can help you with?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 100 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "error_node",
+          "name": "weather_error",
+          "type": "conversation",
+          "edges": [
+            {
+              "id": "edge-error-1",
+              "condition": "Retry",
+              "destination_node_id": "ask_location_node",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Retry"
+              }
+            },
+            {
+              "id": "edge-error-2",
+              "condition": "Exit",
+              "destination_node_id": "end-node-weather",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Exit"
+              }
+            }
+          ],
+          "instruction": {
+            "text": "Sorry, I couldn't fetch the weather. Would you like to try again?",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1000, "y": 300 },
+          "interruption_sensitivity": 0
+        },
+        {
+          "id": "end-node-weather",
+          "name": "end_weather",
+          "type": "end",
+          "instruction": {
+            "text": "Thank you! Have a great day.",
+            "type": "prompt"
+          },
+          "display_position": { "x": 1300, "y": 100 },
+          "interruption_sensitivity": 0
+        }
+      ]
+    },
+    "intents": {}
+  }
+}
